@@ -1,5 +1,14 @@
-# Uncomment this to pass the first stage
+import threading
 import socket
+
+def handle_connection(client_connection):
+    while True:
+        try:
+            client_connection.recv(1024)
+            client_connection.send(b"+PONG\r\n")
+        except ConnectionError:
+            break
+
 
 def create_server(port, ip="127.0.0.1"):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
@@ -10,12 +19,10 @@ def create_server(port, ip="127.0.0.1"):
     return server
 
 def main():
-    #server_socket = socket.create_server(("localhost", 6379), reuse_port=True)
     server_socket = create_server(6379)
-    client_connection, _ = server_socket.accept() # wait for client
     while True:
-        client_connection.recv(1024)
-        client_connection.send(b"+PONG\r\n")
+        client_connection, _ = server_socket.accept()
+        threading.Thread(target=handle_connection, args=(client_connection,)).start()
 
 if __name__ == "__main__":
     main()
